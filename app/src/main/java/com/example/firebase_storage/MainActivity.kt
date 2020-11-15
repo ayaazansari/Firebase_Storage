@@ -2,6 +2,7 @@ package com.example.firebase_storage
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -16,6 +17,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 private const val REQUEST_CODE_IMAGE_PICK = 0
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -36,6 +38,25 @@ class MainActivity : AppCompatActivity() {
 
         btnUploadImage.setOnClickListener {
             uploadImageToStorage("myImage")
+        }
+
+        btnDownloadImage.setOnClickListener {
+            downloadImage("myImage")
+        }
+    }
+
+    private fun downloadImage(filename: String) = CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val maxDownloadSize = 5L * 1024 * 1024
+            val bytes = imageRef.child("images/$filename").getBytes(maxDownloadSize).await()
+            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            withContext(Dispatchers.Main) {
+                ivImage.setImageBitmap(bmp)
+            }
+        } catch(e: Exception) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
